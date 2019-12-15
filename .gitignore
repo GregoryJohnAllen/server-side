@@ -1,0 +1,4 @@
+node_modules/ 
+# This will make sure that all of the node_modules folders are not pushed to git
+*.env
+# This is making sure that all .env files will not be uploaded to github ( passwords and user information)

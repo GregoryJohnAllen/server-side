@@ -1,0 +1,93 @@
+var express = require('express');
+var router = express.Router()
+var sequelize = require("../db");
+var User = sequelize.import("../models/user")
+var AuthTestModel = sequelize.import("../models/authtest")
+
+
+router.get('/getall', function(req, res){
+  //grabbing all of the Gorocery LIst items from
+  //database for a given user
+  var userid = req.user.id
+  AuthTestModel.findAll({
+    where:{
+      owner:userid
+    }
+  }).then(
+    function findAllSuccess(data){
+      res.json(data)
+    }, function findAll(err){
+      res.send(500, err.message)
+    }
+  );
+});
+
+// Posting data for a given user
+
+router.post('/create', function(req, res){
+  var owner = req.user.id
+  var authTestData = req.body.authtestdata.item 
+
+  AuthTestModel.create({
+    authtestdata: authTestData, 
+    owner: owner
+  }).then(
+    function createSuccess(authtestdata){
+      res.json({
+        authtestdata: authtestdata
+      })
+    },
+    function createError(err){
+      res.send(500, err.message)
+    }
+  )
+})
+
+
+
+// localhost:3000/authtest/[Primary Key Number]
+// localhost:3000/authtest/7
+router.get("/:id", function(req, res){
+  var primaryKey = req.params.id;
+  var userid = req.user.id
+  AuthTestModel.findOne(
+    {
+      where: {id:primaryKey, 
+        owner:userid
+      }
+    }
+  ).then(
+    data => {return data ? res.json(data): res.send("Not Authorized to view row")
+    }), (err=> res.send(500, err.message))
+});
+
+router.delete("/delete/:id", function(req, res){
+  var primaryKey = req.params.id
+  var userid = req.user.id
+
+  AuthTestModel.destroy({
+    where: {id:primaryKey, owner:userid}
+  }).then(data => {
+    return res.json(data)
+  }), err => res.send(500, err.message)
+})
+
+//Updating Record for the individual
+// Endpoint: /update/[number here]
+// Actual URL: localhost:3000/authtest/update/10
+router.put("/update/:id", function(req, res){
+  var primaryKey = req.params.id
+  var userid = req.user.id
+  var authtestdata = req.body.authtestdata.item
+
+  AuthTestModel.update({
+    authtestdata: authtestdata
+  },
+  {where:{id: primaryKey, owner: userid}}
+  ).then(
+    data =>{
+      return data > 0 ? res.json(data): res.send("Not Authoried to update row")
+    }), (err=> res.send(500, err.message))
+});
+
+module.exports = router;
